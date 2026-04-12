@@ -1,0 +1,19 @@
+# PropOS Enterprise — Root Gitignore
+
+# Backend artifacts
+Backend/node_modules/
+Backend/dist/
+Backend/.env
+Backend/.env.local
+Backend/.env.production
+Backend/logs/
+Backend/*.log
+
+# Frontend artifacts
+Frontend/node_modules/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/

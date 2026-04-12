@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PropOS Enterprise — Dashboard</title>
+  <meta name="description" content="PropOS Enterprise institutional real estate portfolio management dashboard"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body class="dashboard-page">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon-sm">
+        <svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="10" fill="url(#g2)"/><path d="M12 14h16M12 20h10M12 26h13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="29" cy="26" r="4" fill="#fff" opacity="0.9"/><defs><linearGradient id="g2" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
+      </div>
+      <span>PropOS</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview"><span class="nav-icon">📊</span><span>Overview</span></a>
+      <a href="#" class="nav-item" data-section="portfolios"><span class="nav-icon">🏦</span><span>Portfolios</span></a>
+      <a href="#" class="nav-item" data-section="assets"><span class="nav-icon">🏢</span><span>Assets</span></a>
+      <a href="#" class="nav-item" data-section="finance"><span class="nav-icon">💷</span><span>Finance</span></a>
+      <a href="#" class="nav-item" data-section="compliance"><span class="nav-icon">🛡️</span><span>Compliance</span></a>
+      <a href="#" class="nav-item" data-section="insurance"><span class="nav-icon">📋</span><span>Insurance</span></a>
+      <a href="#" class="nav-item" data-section="profile"><span class="nav-icon">👤</span><span>Profile</span></a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-info">
+          <span class="user-name" id="sidebar-name">Loading…</span>
+          <span class="user-role" id="sidebar-role">—</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrap">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h2 class="page-title" id="page-title">Overview</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="db-badge">
+          <span class="status-dot green"></span>
+          <span id="db-name">PropOSweb</span>
+        </div>
+        <button class="btn-sm" onclick="refreshAll()" title="Refresh data">↻ Refresh</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ═══ OVERVIEW ═══ -->
+      <section id="section-overview" class="section active">
+        <div class="stats-grid" id="overview-stats">
+          <div class="stat-card"><div class="stat-icon purple">🏦</div><div class="stat-info"><span class="stat-num" id="stat-portfolios">—</span><span class="stat-label">Portfolios</span></div></div>
+          <div class="stat-card"><div class="stat-icon blue">🏢</div><div class="stat-info"><span class="stat-num" id="stat-assets">—</span><span class="stat-label">Assets</span></div></div>
+          <div class="stat-card"><div class="stat-icon green">💷</div><div class="stat-info"><span class="stat-num" id="stat-aum">—</span><span class="stat-label">Total AUM</span></div></div>
+          <div class="stat-card"><div class="stat-icon orange">🛡️</div><div class="stat-info"><span class="stat-num" id="stat-compliance">—</span><span class="stat-label">Compliance</span></div></div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><h3>Recent Transactions</h3><span class="badge" id="badge-txs">0</span></div>
+            <div id="recent-txs"><p class="empty-msg">Loading…</p></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><h3>Compliance Summary</h3><button class="btn-sm" onclick="navigateTo('compliance')">View All</button></div>
+            <div id="compliance-summary"><p class="empty-msg">Loading…</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PORTFOLIOS ═══ -->
+      <section id="section-portfolios" class="section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>My Portfolios</h3>
+            <button class="btn-primary-sm" onclick="showCreatePortfolioModal()">+ New Portfolio</button>
+          </div>
+          <div id="portfolios-list"><p class="empty-msg">Loading portfolios…</p></div>
+        </div>
+      </section>
+
+      <!-- ═══ ASSETS ═══ -->
+      <section id="section-assets" class="section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Property Assets</h3>
+            <div style="display:flex;gap:0.5rem;">
+              <input class="filter-input" id="asset-search" placeholder="Search city…" oninput="filterAssets()"/>
+              <button class="btn-primary-sm" onclick="showCreateAssetModal()">+ Add Asset</button>
+            </div>
+          </div>
+          <div id="assets-list"><p class="empty-msg">Loading assets…</p></div>
+        </div>
+      </section>
+
+      <!-- ═══ FINANCE ═══ -->
+      <section id="section-finance" class="section hidden">
+        <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:1.5rem">
+          <div class="stat-card"><div class="stat-icon green">⬇️</div><div class="stat-info"><span class="stat-num" id="stat-income">—</span><span class="stat-label">Total In (GBP)</span></div></div>
+          <div class="stat-card"><div class="stat-icon red">⬆️</div><div class="stat-info"><span class="stat-num" id="stat-expense">—</span><span class="stat-label">Total Out (GBP)</span></div></div>
+          <div class="stat-card"><div class="stat-icon orange">🚨</div><div class="stat-info"><span class="stat-num" id="stat-aml">—</span><span class="stat-label">AML Flagged</span></div></div>
+          <div class="stat-card"><div class="stat-icon blue">✅</div><div class="stat-info"><span class="stat-num" id="stat-reconciled">—</span><span class="stat-label">Reconciled</span></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Transactions</h3>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <select class="filter-select" id="tx-filter-dir" onchange="loadTransactions()"><option value="">All</option><option value="in">In</option><option value="out">Out</option></select>
+              <select class="filter-select" id="tx-filter-aml" onchange="loadTransactions()"><option value="">All</option><option value="true">AML Flagged</option></select>
+              <button class="btn-primary-sm" onclick="showCreateTransactionModal()">+ Add</button>
+            </div>
+          </div>
+          <div id="transactions-list"><p class="empty-msg">Loading transactions…</p></div>
+        </div>
+      </section>
+
+      <!-- ═══ COMPLIANCE ═══ -->
+      <section id="section-compliance" class="section hidden">
+        <div class="panel" id="compliance-audit-panel">
+          <div class="panel-header"><h3>Audit Status</h3><button class="btn-sm" onclick="loadCompliance()">Refresh</button></div>
+          <div id="compliance-audit"><p class="empty-msg">Loading…</p></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Compliance Logs</h3><span class="badge" id="badge-logs">0</span></div>
+          <div id="compliance-logs"><p class="empty-msg">Loading…</p></div>
+        </div>
+      </section>
+
+      <!-- ═══ INSURANCE ═══ -->
+      <section id="section-insurance" class="section hidden">
+        <div class="panel">
+          <div class="panel-header"><h3>Insurance Policies</h3><span class="badge" id="badge-policies">0</span></div>
+          <div id="insurance-list"><p class="empty-msg">Loading policies…</p></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>Get Quote</h3></div>
+          <div style="padding:1.25rem;">
+            <div class="quote-form">
+              <div class="form-group"><label>Asset</label><select id="quote-asset" class="filter-select" style="width:100%"><option value="">Select asset…</option></select></div>
+              <div class="form-group"><label>Policy Type</label><select id="quote-type" class="filter-select" style="width:100%"><option value="buildings">Buildings</option><option value="contents">Contents</option><option value="liability">Liability</option><option value="combined">Combined</option></select></div>
+              <div class="form-group"><label>Coverage Limit (£)</label><input type="number" id="quote-limit" class="filter-input" style="width:100%" placeholder="e.g. 1000000"/></div>
+              <button class="btn-primary" onclick="getInsuranceQuote()" style="margin-top:0.5rem">Get Quote</button>
+            </div>
+            <div id="quote-result" class="hidden" style="margin-top:1.25rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PROFILE ═══ -->
+      <section id="section-profile" class="section hidden">
+        <div class="panel profile-panel">
+          <div class="profile-avatar" id="profile-avatar">?</div>
+          <div class="profile-details" id="profile-details"><p class="empty-msg">Loading profile…</p></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══ Modals ═══ -->
+  <div class="modal-backdrop hidden" id="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal hidden" id="modal">
+    <div class="modal-header"><h3 id="modal-title">Modal</h3><button onclick="closeModal()">✕</button></div>
+    <div id="modal-body"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
