@@ -16,16 +16,31 @@ const app = express();
 app.use(helmet());
 
 // ─── CORS ──────────────────────────────────────────────────────────
+// CLIENT_URL can be a comma-separated list for multiple allowed origins.
+// e.g. on Render: CLIENT_URL=https://propos.elitestays.name.ng
+const envOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:3000',
+  ...envOrigins,
+  'https://propos.elitestays.name.ng', // production frontend
+  'http://localhost:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
   'http://localhost:5173',
 ];
+
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      // Allow requests with no origin (curl, Postman, server-to-server)
+      if (!origin) return cb(null, true);
+      // Allow exact matches
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      // Allow any Vercel preview/production deployment automatically
+      if (/^https:\/\/[\w-]+(\.vercel\.app)$/.test(origin)) return cb(null, true);
       cb(new Error(`CORS: origin '${origin}' not allowed`));
     },
     credentials: true,

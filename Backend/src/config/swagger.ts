@@ -12,7 +12,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       { url: 'http://localhost:5000', description: 'Development' },
-      { url: 'https://propos-api.onrender.com', description: 'Production (Render)' },
+      { url: 'https://proposwebsite.onrender.com', description: 'Production (Render)' },
     ],
     components: {
       securitySchemes: {

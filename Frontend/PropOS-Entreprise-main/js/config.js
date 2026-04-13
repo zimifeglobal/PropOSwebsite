@@ -2,15 +2,21 @@
 
 /**
  * Auto-detect API base URL:
- * - In production (Render): same origin → /api
- * - In local dev (file:// or localhost): → http://localhost:5000/api
+ * - Local dev (file:// or localhost)  → http://localhost:5000/api
+ * - Production (Vercel frontend)      → Render backend URL
+ *
+ * ⚠️  Replace RENDER_BACKEND_URL below with your actual Render service URL.
+ *     Example: 'https://proposwebsite.onrender.com/api'
  */
+const RENDER_BACKEND_URL = 'https://proposwebsite.onrender.com/api';
+
 const API_BASE = (() => {
   const { hostname, protocol } = window.location;
   if (protocol === 'file:' || hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000/api';
   }
-  return '/api'; // same-origin on Render
+  // Frontend is on Vercel, backend is on Render — must use the full absolute URL.
+  return RENDER_BACKEND_URL;
 })();
 
 const api = {
