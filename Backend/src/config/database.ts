@@ -16,7 +16,9 @@ const connectDB = async (): Promise<void> => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`MongoDB connection failed: ${message}`);
-    process.exit(1);
+    // Do NOT call process.exit(1) here — the HTTP server is already bound
+    // and Render's health checks need it to keep running. DB reconnection
+    // will be retried automatically by Mongoose's reconnect logic.
   }
 };
 
