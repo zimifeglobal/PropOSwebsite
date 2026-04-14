@@ -6,6 +6,8 @@
  * - Hosted frontend + hosted backend on same domain -> /api
  * - Optional override via window.__PROPOS_API_BASE__
  */
+const RENDER_API = 'https://proposwebsite.onrender.com/api';
+
 const API_BASE = (() => {
   if (typeof window.__PROPOS_API_BASE__ === 'string' && window.__PROPOS_API_BASE__.trim()) {
     return window.__PROPOS_API_BASE__.trim().replace(/\/$/, '');
@@ -14,15 +16,12 @@ const API_BASE = (() => {
   if (protocol === 'file:' || hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000/api';
   }
-  if (
-    hostname === 'itestays.name.ng' ||
-    hostname === 'www.itestays.name.ng' ||
-    hostname === 'propos.elitestays.name.ng' ||
-    hostname === 'www.propos.elitestays.name.ng'
-  ) {
-    return 'https://proposwebsite.onrender.com/api';
+  /* Backend serves this SPA from the same host — use relative /api */
+  if (hostname === 'proposwebsite.onrender.com') {
+    return '/api';
   }
-  return '/api';
+  /* Vercel (*.vercel.app), custom domains, and any other static host: call Render directly */
+  return RENDER_API;
 })();
 
 function getApiBase() {
@@ -53,7 +52,7 @@ const api = {
 
       if (!res.ok) {
         const fallbackMessage = rawBody && !data
-          ? 'Server returned a non-JSON response. Please verify API route and deployment.'
+          ? `Server returned non-JSON (HTTP ${res.status}). Static hosts must use the Render API URL — redeploy the latest frontend.`
           : 'Request failed';
         throw { status: res.status, message: data?.message || fallbackMessage };
       }
