@@ -20,6 +20,10 @@ const API_BASE = (() => {
   return '/api';
 })();
 
+function getApiBase() {
+  return API_BASE;
+}
+
 const api = {
   /** Generic fetch wrapper with auth header */
   async request(endpoint, options = {}) {

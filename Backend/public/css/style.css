@@ -183,6 +183,13 @@ code { font-family: 'Fira Code', 'Courier New', monospace; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex-shrink: 0; }
 .status-dot.green { background: var(--green); box-shadow: 0 0 6px rgba(16,185,129,0.6); animation: pulse 2s infinite; }
 .status-dot.red   { background: var(--red); }
+.api-base-hint {
+  margin-top: 0.4rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text2);
+  overflow-wrap: anywhere;
+}
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
 /* ─── Dashboard Layout ────────────────────────────── */
