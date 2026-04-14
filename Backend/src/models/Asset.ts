@@ -24,7 +24,7 @@ export interface IAsset extends Document {
 
 const assetSchema = new Schema<IAsset>(
   {
-    portfolio_id: { type: Schema.Types.ObjectId, ref: 'Portfolio', required: true, index: true },
+    portfolio_id: { type: Schema.Types.ObjectId, ref: 'Portfolio', required: true },
     name: { type: String, required: true, trim: true },
     address: {
       street: { type: String, required: true },
