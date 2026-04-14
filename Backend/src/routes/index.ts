@@ -8,6 +8,7 @@ import tenancyRoutes from './tenancy.routes';
 import complianceRoutes from './compliance.routes';
 import financeRoutes from './finance.routes';
 import insuranceRoutes from './insurance.routes';
+import supportRoutes from './support.routes';
 
 const router = Router();
 
@@ -41,5 +42,6 @@ router.use('/tenancies',  tenancyRoutes);
 router.use('/compliance', complianceRoutes);
 router.use('/finance',    financeRoutes);
 router.use('/insurance',  insuranceRoutes);
+router.use('/support',    supportRoutes);
 
 export default router;

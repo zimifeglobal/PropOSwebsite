@@ -20,14 +20,14 @@
       <span>PropOS</span>
     </div>
 
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item active" data-section="overview"><span class="nav-icon">📊</span><span>Overview</span></a>
-      <a href="#" class="nav-item" data-section="portfolios"><span class="nav-icon">🏦</span><span>Portfolios</span></a>
-      <a href="#" class="nav-item" data-section="assets"><span class="nav-icon">🏢</span><span>Assets</span></a>
-      <a href="#" class="nav-item" data-section="finance"><span class="nav-icon">💷</span><span>Finance</span></a>
-      <a href="#" class="nav-item" data-section="compliance"><span class="nav-icon">🛡️</span><span>Compliance</span></a>
-      <a href="#" class="nav-item" data-section="insurance"><span class="nav-icon">📋</span><span>Insurance</span></a>
-      <a href="#" class="nav-item" data-section="profile"><span class="nav-icon">👤</span><span>Profile</span></a>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <a href="#" class="nav-item active" data-section="overview" title="Summary of portfolios, assets, recent activity, and compliance status"><span class="nav-icon">📊</span><span>Overview</span></a>
+      <a href="#" class="nav-item" data-section="portfolios" title="Create and manage investment or property portfolios"><span class="nav-icon">🏦</span><span>Portfolios</span></a>
+      <a href="#" class="nav-item" data-section="assets" title="Add buildings and units linked to a portfolio"><span class="nav-icon">🏢</span><span>Assets</span></a>
+      <a href="#" class="nav-item" data-section="finance" title="Record money in/out, categories, and AML flags"><span class="nav-icon">💷</span><span>Finance</span></a>
+      <a href="#" class="nav-item" data-section="compliance" title="Audit status and compliance logs"><span class="nav-icon">🛡️</span><span>Compliance</span></a>
+      <a href="#" class="nav-item" data-section="insurance" title="Policies and indicative quotes for your assets"><span class="nav-icon">📋</span><span>Insurance</span></a>
+      <a href="#" class="nav-item" data-section="profile" title="Your account details and role"><span class="nav-icon">👤</span><span>Profile</span></a>
     </nav>
 
     <div class="sidebar-footer">
@@ -46,15 +46,19 @@
   <div class="main-wrap">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <button type="button" class="menu-btn" onclick="toggleSidebar()" title="Show or hide the sidebar">☰</button>
         <h2 class="page-title" id="page-title">Overview</h2>
       </div>
       <div class="topbar-right">
-        <div class="db-badge">
-          <span class="status-dot green"></span>
-          <span id="db-name">PropOSweb</span>
+        <div class="topbar-help-actions" role="toolbar" aria-label="Help and information">
+          <button type="button" class="btn-help" onclick="openAboutModal()" title="Company overview and what PropOS includes">About &amp; services</button>
+          <button type="button" class="btn-help" onclick="openGuideModal()" title="Recommended steps for new users">Getting started</button>
         </div>
-        <button class="btn-sm" onclick="refreshAll()" title="Refresh data">↻ Refresh</button>
+        <div class="db-badge" id="topbar-status" title="Connection status">
+          <span class="status-dot green"></span>
+          <span id="conn-label">Connected</span>
+        </div>
+        <button type="button" class="btn-sm" onclick="refreshAll()" title="Reload all sections from the server">↻ Refresh</button>
       </div>
     </header>
 
@@ -62,11 +66,21 @@
 
       <!-- ═══ OVERVIEW ═══ -->
       <section id="section-overview" class="section active">
+        <div class="welcome-banner">
+          <div class="welcome-banner-text">
+            <h3 class="welcome-title">Welcome to your workspace</h3>
+            <p class="welcome-desc">PropOS Enterprise brings portfolios, property assets, finance, compliance, and insurance together. Start with a portfolio, then add assets and transactions — use the guide anytime.</p>
+          </div>
+          <div class="welcome-banner-actions">
+            <button type="button" class="btn-primary-sm" onclick="openGuideModal()" title="Open the step-by-step checklist">Getting started guide</button>
+            <button type="button" class="btn-sm" onclick="openAboutModal()" title="Learn what we offer">Who we are</button>
+          </div>
+        </div>
         <div class="stats-grid" id="overview-stats">
-          <div class="stat-card"><div class="stat-icon purple">🏦</div><div class="stat-info"><span class="stat-num" id="stat-portfolios">—</span><span class="stat-label">Portfolios</span></div></div>
-          <div class="stat-card"><div class="stat-icon blue">🏢</div><div class="stat-info"><span class="stat-num" id="stat-assets">—</span><span class="stat-label">Assets</span></div></div>
-          <div class="stat-card"><div class="stat-icon green">💷</div><div class="stat-info"><span class="stat-num" id="stat-aum">—</span><span class="stat-label">Total AUM</span></div></div>
-          <div class="stat-card"><div class="stat-icon orange">🛡️</div><div class="stat-info"><span class="stat-num" id="stat-compliance">—</span><span class="stat-label">Compliance</span></div></div>
+          <div class="stat-card" title="Number of portfolios you own"><div class="stat-icon purple">🏦</div><div class="stat-info"><span class="stat-num" id="stat-portfolios">—</span><span class="stat-label">Portfolios</span></div></div>
+          <div class="stat-card" title="Properties or sites under those portfolios"><div class="stat-icon blue">🏢</div><div class="stat-info"><span class="stat-num" id="stat-assets">—</span><span class="stat-label">Assets</span></div></div>
+          <div class="stat-card" title="Sum of portfolio AUM figures (reporting currency)"><div class="stat-icon green">💷</div><div class="stat-info"><span class="stat-num" id="stat-aum">—</span><span class="stat-label">Total AUM</span></div></div>
+          <div class="stat-card" title="Latest overall compliance posture from audit engine"><div class="stat-icon orange">🛡️</div><div class="stat-info"><span class="stat-num" id="stat-compliance">—</span><span class="stat-label">Compliance</span></div></div>
         </div>
 
         <div class="two-col">
@@ -75,7 +89,7 @@
             <div id="recent-txs"><p class="empty-msg">Loading…</p></div>
           </div>
           <div class="panel">
-            <div class="panel-header"><h3>Compliance Summary</h3><button class="btn-sm" onclick="navigateTo('compliance')">View All</button></div>
+            <div class="panel-header"><h3>Compliance Summary</h3><button type="button" class="btn-sm" onclick="navigateTo('compliance')" title="Open full compliance section">View All</button></div>
             <div id="compliance-summary"><p class="empty-msg">Loading…</p></div>
           </div>
         </div>
@@ -86,7 +100,7 @@
         <div class="panel">
           <div class="panel-header">
             <h3>My Portfolios</h3>
-            <button class="btn-primary-sm" onclick="showCreatePortfolioModal()">+ New Portfolio</button>
+            <button type="button" class="btn-primary-sm" onclick="showCreatePortfolioModal()" title="Create a named portfolio to hold your property assets">+ New Portfolio</button>
           </div>
           <div id="portfolios-list"><p class="empty-msg">Loading portfolios…</p></div>
         </div>
@@ -98,8 +112,8 @@
           <div class="panel-header">
             <h3>Property Assets</h3>
             <div style="display:flex;gap:0.5rem;">
-              <input class="filter-input" id="asset-search" placeholder="Search city…" oninput="filterAssets()"/>
-              <button class="btn-primary-sm" onclick="showCreateAssetModal()">+ Add Asset</button>
+              <input class="filter-input" id="asset-search" placeholder="Search by city, name, postcode…" title="Filter the table below" oninput="filterAssets()"/>
+              <button type="button" class="btn-primary-sm" onclick="showCreateAssetModal()" title="Register a building or site under a portfolio">+ Add Asset</button>
             </div>
           </div>
           <div id="assets-list"><p class="empty-msg">Loading assets…</p></div>
@@ -118,9 +132,9 @@
           <div class="panel-header">
             <h3>Transactions</h3>
             <div style="display:flex;gap:0.5rem;align-items:center;">
-              <select class="filter-select" id="tx-filter-dir" onchange="loadTransactions()"><option value="">All</option><option value="in">In</option><option value="out">Out</option></select>
-              <select class="filter-select" id="tx-filter-aml" onchange="loadTransactions()"><option value="">All</option><option value="true">AML Flagged</option></select>
-              <button class="btn-primary-sm" onclick="showCreateTransactionModal()">+ Add</button>
+              <select class="filter-select" id="tx-filter-dir" title="Filter by money in or out" onchange="loadTransactions()"><option value="">All</option><option value="in">In</option><option value="out">Out</option></select>
+              <select class="filter-select" id="tx-filter-aml" title="Show only AML-flagged rows" onchange="loadTransactions()"><option value="">All</option><option value="true">AML Flagged</option></select>
+              <button type="button" class="btn-primary-sm" onclick="showCreateTransactionModal()" title="Record a bank movement">+ Add</button>
             </div>
           </div>
           <div id="transactions-list"><p class="empty-msg">Loading transactions…</p></div>
@@ -130,7 +144,7 @@
       <!-- ═══ COMPLIANCE ═══ -->
       <section id="section-compliance" class="section hidden">
         <div class="panel" id="compliance-audit-panel">
-          <div class="panel-header"><h3>Audit Status</h3><button class="btn-sm" onclick="loadCompliance()">Refresh</button></div>
+          <div class="panel-header"><h3>Audit Status</h3><button type="button" class="btn-sm" onclick="loadCompliance()" title="Reload compliance data">Refresh</button></div>
           <div id="compliance-audit"><p class="empty-msg">Loading…</p></div>
         </div>
         <div class="panel">
@@ -152,7 +166,7 @@
               <div class="form-group"><label>Asset</label><select id="quote-asset" class="filter-select" style="width:100%"><option value="">Select asset…</option></select></div>
               <div class="form-group"><label>Policy Type</label><select id="quote-type" class="filter-select" style="width:100%"><option value="buildings">Buildings</option><option value="contents">Contents</option><option value="liability">Liability</option><option value="combined">Combined</option></select></div>
               <div class="form-group"><label>Coverage Limit (£)</label><input type="number" id="quote-limit" class="filter-input" style="width:100%" placeholder="e.g. 1000000"/></div>
-              <button class="btn-primary" onclick="getInsuranceQuote()" style="margin-top:0.5rem">Get Quote</button>
+              <button type="button" class="btn-primary" onclick="getInsuranceQuote()" style="margin-top:0.5rem" title="Request an indicative premium for the selected asset">Get Quote</button>
             </div>
             <div id="quote-result" class="hidden" style="margin-top:1.25rem;"></div>
           </div>
@@ -172,16 +186,39 @@
 
   <!-- ═══ Modals ═══ -->
   <div class="modal-backdrop hidden" id="modal-backdrop" onclick="closeModal()"></div>
-  <div class="modal hidden" id="modal">
-    <div class="modal-header"><h3 id="modal-title">Modal</h3><button onclick="closeModal()">✕</button></div>
+  <div class="modal modal--wide hidden" id="modal">
+    <div class="modal-header"><h3 id="modal-title">Modal</h3><button type="button" onclick="closeModal()" title="Close">✕</button></div>
     <div id="modal-body"></div>
   </div>
+
+  <!-- ═══ Support drawer (message to admin) ═══ -->
+  <div class="support-drawer-backdrop hidden" id="support-drawer-backdrop" onclick="closeSupportDrawer()"></div>
+  <aside class="support-drawer hidden" id="support-drawer" aria-hidden="true" aria-labelledby="support-drawer-title">
+    <div class="support-drawer-inner">
+      <header class="support-drawer-head">
+        <div>
+          <h3 id="support-drawer-title">Support</h3>
+          <p class="support-drawer-sub">Messages are sent to your administrator team. You’ll see confirmations below.</p>
+        </div>
+        <button type="button" class="support-close" onclick="closeSupportDrawer()" title="Close">✕</button>
+      </header>
+      <div class="support-thread" id="support-thread" role="log" aria-live="polite"></div>
+      <form class="support-form" id="support-form" onsubmit="submitSupportMessage(event)">
+        <label class="support-label" for="support-subject">Subject</label>
+        <input type="text" id="support-subject" class="filter-input" placeholder="e.g. Cannot add an asset" maxlength="200" required autocomplete="off"/>
+        <label class="support-label" for="support-body">Your message</label>
+        <textarea id="support-body" class="filter-input support-textarea" rows="4" placeholder="Describe what you need help with (min. 10 characters)." maxlength="8000" required></textarea>
+        <button type="submit" class="btn-primary" id="support-submit">Send to support</button>
+      </form>
+    </div>
+  </aside>
+  <button type="button" class="support-fab" id="support-fab" onclick="openSupportDrawer()" title="Contact support or send a message to admin">💬</button>
 
   <script>
     window.__PROPOS_API_BASE__ = 'https://proposwebsite.onrender.com/api';
   </script>
   <script src="js/config.js?v=20260415a"></script>
   <script src="js/locations-data.js?v=20260416"></script>
-  <script src="js/dashboard.js?v=20260416"></script>
+  <script src="js/dashboard.js?v=20260417"></script>
 </body>
 </html>

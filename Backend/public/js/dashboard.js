@@ -12,6 +12,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   populateSidebar();
   setupNav();
   await refreshAll();
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeSupportDrawer();
+      closeModal();
+    }
+  });
 });
 
 async function refreshAll() {
@@ -49,9 +55,25 @@ function setupNav() {
 function navigateTo(section) {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
-  document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-  document.getElementById(`section-${section}`)?.classList.remove('hidden');
-  document.getElementById('page-title').textContent = cap(section);
+  document.querySelectorAll('.section').forEach(s => {
+    s.classList.add('hidden');
+    s.classList.remove('active');
+  });
+  const target = document.getElementById(`section-${section}`);
+  if (target) {
+    target.classList.remove('hidden');
+    target.classList.add('active');
+  }
+  const titles = {
+    overview: 'Overview',
+    portfolios: 'Portfolios',
+    assets: 'Assets',
+    finance: 'Finance',
+    compliance: 'Compliance',
+    insurance: 'Insurance',
+    profile: 'Profile',
+  };
+  document.getElementById('page-title').textContent = titles[section] || cap(section);
 }
 
 function toggleSidebar() {
@@ -89,17 +111,24 @@ async function loadOverview() {
     const cSummary = compData.value?.data || {};
     renderComplianceSummary(cSummary);
 
-    // Health check: update DB name
     const health = await api.get('/health');
-    document.getElementById('db-name').textContent = health.database?.name || 'PropOSweb';
+    const statusEl = document.getElementById('topbar-status');
+    const labelEl = document.getElementById('conn-label');
+    if (labelEl) labelEl.textContent = 'Connected';
+    if (statusEl) {
+      statusEl.title = `Services online · ${health.environment || 'production'} · ${health.database?.name || 'database'}`;
+    }
   } catch (e) {
     console.error('Overview load error:', e);
+    const labelEl = document.getElementById('conn-label');
+    if (labelEl) labelEl.textContent = 'Check connection';
   }
 }
 
 function renderRecentTxs(txs) {
   if (!txs.length) {
-    document.getElementById('recent-txs').innerHTML = '<p class="empty-msg">No transactions yet. <a href="#" onclick="navigateTo(\'finance\')">Add one</a></p>';
+    document.getElementById('recent-txs').innerHTML =
+      '<p class="empty-msg">No transactions yet. <button type="button" class="link-inline" onclick="navigateTo(\'finance\')">Add one</button></p>';
     return;
   }
   document.getElementById('recent-txs').innerHTML = `
@@ -599,6 +628,108 @@ async function handleLogout() {
   try { await api.post('/auth/logout'); } catch {}
   clearSession();
   window.location.href = 'index.html';
+}
+
+// ─── HELP: ABOUT, GUIDE, SUPPORT ──────────────────────────────────
+function openAboutModal() {
+  openModal('About PropOS Enterprise', `
+    <div class="help-prose">
+      <p class="help-lead">PropOS Enterprise is a <strong>property and portfolio operations platform</strong> for teams who manage real estate assets, cash flows, and regulatory obligations in one place.</p>
+      <h4>What we help you do</h4>
+      <ul>
+        <li><strong>Portfolios</strong> — Group assets under named portfolios with currencies and AUM for reporting.</li>
+        <li><strong>Assets</strong> — Record buildings and addresses, ESG and health scores, and values linked to a portfolio.</li>
+        <li><strong>Finance</strong> — Log money in and out with categories, reconciliation flags, and AML markers.</li>
+        <li><strong>Compliance</strong> — See audit status and a trail of compliance checks across entities.</li>
+        <li><strong>Insurance</strong> — Review policies and run indicative quotes using your asset data.</li>
+        <li><strong>Profile</strong> — View your role (cashier, manager, admin) and account status.</li>
+      </ul>
+      <p class="help-muted">Access to actions may vary by role. Your organisation’s admin can adjust permissions and data scope.</p>
+    </div>`);
+}
+
+function openGuideModal() {
+  openModal('Getting started on PropOS', `
+    <div class="help-prose">
+      <ol class="help-steps">
+        <li><strong>Create a portfolio</strong> — Go to <em>Portfolios</em> → <em>+ New Portfolio</em>. Give it a name and optional AUM.</li>
+        <li><strong>Add property assets</strong> — Open <em>Assets</em> → <em>+ Add Asset</em>. Pick the portfolio, enter address (use the city picker), type, and value.</li>
+        <li><strong>Record transactions</strong> — Under <em>Finance</em>, add in/out movements with categories so reports stay meaningful.</li>
+        <li><strong>Review compliance</strong> — Visit <em>Compliance</em> for audit status and logs; use <em>Refresh</em> after changes.</li>
+        <li><strong>Insurance</strong> — When you have assets, select one in <em>Get Quote</em> to see an indicative premium.</li>
+        <li><strong>Need help?</strong> — Use the <em>💬 Support</em> button (bottom-right) to message your admin team.</li>
+      </ol>
+      <p class="help-muted">Tip: Use <strong>Refresh</strong> in the top bar after adding data to update all tiles.</p>
+    </div>`);
+}
+
+function ensureSupportIntro() {
+  const th = document.getElementById('support-thread');
+  if (!th || th.dataset.ready === '1') return;
+  th.dataset.ready = '1';
+  th.innerHTML = `
+    <div class="support-bubble support-bubble--team">
+      <span class="support-bubble-name">PropOS Support</span>
+      <p>Hi! Send a message below — it’s delivered to your organisation’s support queue. For urgent issues, say so in the subject line.</p>
+    </div>`;
+}
+
+function openSupportDrawer() {
+  ensureSupportIntro();
+  document.getElementById('support-drawer')?.classList.remove('hidden');
+  document.getElementById('support-drawer-backdrop')?.classList.remove('hidden');
+  document.getElementById('support-drawer')?.setAttribute('aria-hidden', 'false');
+}
+
+function closeSupportDrawer() {
+  document.getElementById('support-drawer')?.classList.add('hidden');
+  document.getElementById('support-drawer-backdrop')?.classList.add('hidden');
+  document.getElementById('support-drawer')?.setAttribute('aria-hidden', 'true');
+}
+
+function appendSupportUserBubble(subject, body) {
+  const th = document.getElementById('support-thread');
+  if (!th) return;
+  const div = document.createElement('div');
+  div.className = 'support-bubble support-bubble--user';
+  div.innerHTML = `<span class="support-bubble-name">You · ${esc(subject)}</span><p>${esc(body)}</p>`;
+  th.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function appendSupportTeamAck() {
+  const th = document.getElementById('support-thread');
+  if (!th) return;
+  const div = document.createElement('div');
+  div.className = 'support-bubble support-bubble--team';
+  div.innerHTML =
+    '<span class="support-bubble-name">PropOS Support</span><p>Thanks — your message was saved and routed to the admin team. They’ll follow up by email if needed.</p>';
+  th.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+async function submitSupportMessage(e) {
+  e.preventDefault();
+  const subject = document.getElementById('support-subject')?.value.trim() || '';
+  const body = document.getElementById('support-body')?.value.trim() || '';
+  const btn = document.getElementById('support-submit');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+  }
+  try {
+    await api.post('/support/messages', { subject, body });
+    appendSupportUserBubble(subject, body);
+    appendSupportTeamAck();
+    document.getElementById('support-form')?.reset();
+  } catch (err) {
+    alert(err?.message || 'Could not send message. Try again.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Send to support';
+    }
+  }
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────
