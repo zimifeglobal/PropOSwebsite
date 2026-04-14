@@ -276,8 +276,12 @@ function showCreateAssetModal() {
       <div class="form-group"><label>Asset Name</label><input class="filter-input" id="a-name" placeholder="e.g. One Thames View" required style="width:100%"/></div>
       <div class="form-group"><label>Street</label><input class="filter-input" id="a-street" placeholder="123 Main Street" required style="width:100%"/></div>
       <div class="form-group form-row">
-        <div style="flex:1"><label>City</label><input class="filter-input" id="a-city" placeholder="London" required style="width:100%"/></div>
-        <div style="flex:1"><label>Postcode</label><input class="filter-input" id="a-postcode" placeholder="SW1A 1AA" required style="width:100%"/></div>
+        <div class="form-group" style="flex:1;position:relative;min-width:0">
+          <label>City</label>
+          <input class="filter-input" id="a-city" placeholder="Search city…" autocomplete="off" required style="width:100%"/>
+          <ul class="city-suggestions hidden" id="a-city-suggestions" role="listbox" aria-label="City suggestions"></ul>
+        </div>
+        <div style="flex:1"><label>Postcode</label><input class="filter-input" id="a-postcode" placeholder="SW1A 1AA or 101241" required style="width:100%"/></div>
       </div>
       <div class="form-group form-row">
         <div style="flex:1"><label>ESG Score (0–100)</label><input type="number" class="filter-input" id="a-esg" value="50" min="0" max="100" style="width:100%"/></div>
@@ -286,6 +290,48 @@ function showCreateAssetModal() {
       <div class="form-group"><label>Total Value (£)</label><input type="number" class="filter-input" id="a-value" placeholder="0" required style="width:100%"/></div>
       <button type="submit" class="btn-primary">Add Asset</button>
     </form>`);
+  initCityAutocomplete();
+}
+
+function initCityAutocomplete() {
+  const input = document.getElementById('a-city');
+  const list = document.getElementById('a-city-suggestions');
+  if (!input || !list) return;
+  const all = window.PROPOS_ADDRESS_CITIES || [];
+  const render = (filter) => {
+    const q = (filter || '').trim().toLowerCase();
+    const rows = !q
+      ? all.slice(0, 28)
+      : all.filter((c) => c.toLowerCase().includes(q)).slice(0, 36);
+    if (!rows.length) {
+      list.innerHTML = '<li class="city-suggestion-empty">No match — try another spelling.</li>';
+      list.classList.remove('hidden');
+      return;
+    }
+    list.innerHTML = rows
+      .map((c) => `<li class="city-suggestion-item" role="option">${esc(c)}</li>`)
+      .join('');
+    list.querySelectorAll('.city-suggestion-item').forEach((li) => {
+      li.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        input.value = li.textContent;
+        list.classList.add('hidden');
+      });
+    });
+    list.classList.remove('hidden');
+  };
+  input.addEventListener('focus', () => render(input.value));
+  input.addEventListener('input', () => render(input.value));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') list.classList.add('hidden');
+  });
+  input.addEventListener('blur', () => setTimeout(() => list.classList.add('hidden'), 200));
+}
+
+function isKnownCity(name) {
+  const n = (name || '').trim().toLowerCase();
+  if (!n) return false;
+  return (window.PROPOS_ADDRESS_CITIES || []).some((c) => c.toLowerCase() === n);
 }
 
 async function submitAsset(e) {
@@ -293,12 +339,21 @@ async function submitAsset(e) {
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Adding…';
   try {
+    const cityRaw = document.getElementById('a-city').value.trim();
+    if (!isKnownCity(cityRaw)) {
+      showModalError('Please choose a city from the suggestions list.');
+      btn.disabled = false;
+      btn.textContent = 'Add Asset';
+      return;
+    }
+    const cityCanonical =
+      (window.PROPOS_ADDRESS_CITIES || []).find((c) => c.toLowerCase() === cityRaw.toLowerCase()) || cityRaw;
     await api.post('/assets', {
       portfolio_id: document.getElementById('a-portfolio').value,
       name: document.getElementById('a-name').value.trim(),
       address: {
         street: document.getElementById('a-street').value.trim(),
-        city: document.getElementById('a-city').value.trim(),
+        city: cityCanonical,
         postcode: document.getElementById('a-postcode').value.trim().toUpperCase(),
       },
       esg_score: parseInt(document.getElementById('a-esg').value) || 50,
