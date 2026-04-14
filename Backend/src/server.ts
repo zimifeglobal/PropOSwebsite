@@ -5,6 +5,9 @@ import { startCronJobs } from './services/cron.service';
 import logger from './utils/logger';
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
+const RELEASE_SHA = (process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || '').slice(0, 7) || 'unknown';
+const RELEASE_BRANCH = process.env.RENDER_GIT_BRANCH || process.env.GIT_BRANCH || 'unknown';
+const RELEASE_ID = process.env.RENDER_SERVICE_ID || process.env.RENDER_DEPLOY_ID || 'local';
 
 const start = async (): Promise<void> => {
   // Bind the port FIRST so Render's port scanner detects it immediately.
@@ -12,6 +15,7 @@ const start = async (): Promise<void> => {
   app.listen(PORT, '0.0.0.0', () => {
     logger.info(`Server running on port ${PORT}`);
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Release:     sha=${RELEASE_SHA} branch=${RELEASE_BRANCH} id=${RELEASE_ID}`);
     logger.info(`API Docs:    http://localhost:${PORT}/api/docs`);
     logger.info(`Health:      http://localhost:${PORT}/api/health`);
   });
