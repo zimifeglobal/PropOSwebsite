@@ -26,6 +26,8 @@ const envOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
 const allowedOrigins = [
   ...envOrigins,
   'https://propos.elitestays.name.ng', // production frontend
+  'https://itestays.name.ng',
+  'https://www.itestays.name.ng',
   'http://localhost:3000',
   'http://localhost:5500',
   'http://127.0.0.1:5500',
