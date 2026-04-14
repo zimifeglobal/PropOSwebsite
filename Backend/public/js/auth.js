@@ -4,7 +4,21 @@
 redirectIfAuth();
 
 // Check API health on load
-window.addEventListener('DOMContentLoaded', checkApiStatus);
+window.addEventListener('DOMContentLoaded', () => {
+  renderApiBase();
+  checkApiStatus();
+});
+
+function renderApiBase() {
+  const el = document.getElementById('api-base-hint');
+  if (!el) return;
+  try {
+    const base = typeof getApiBase === 'function' ? getApiBase() : 'unknown';
+    el.textContent = `API Base: ${base}`;
+  } catch {
+    el.textContent = 'API Base: unavailable';
+  }
+}
 
 async function checkApiStatus() {
   const dot  = document.getElementById('status-dot');
