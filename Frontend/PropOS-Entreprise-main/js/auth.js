@@ -3,36 +3,6 @@
 // Redirect to dashboard if already logged in
 redirectIfAuth();
 
-// Check API health on load
-window.addEventListener('DOMContentLoaded', () => {
-  renderApiBase();
-  checkApiStatus();
-});
-
-function renderApiBase() {
-  const el = document.getElementById('api-base-hint');
-  if (!el) return;
-  try {
-    const base = typeof getApiBase === 'function' ? getApiBase() : 'unknown';
-    el.textContent = `API Base: ${base}`;
-  } catch {
-    el.textContent = 'API Base: unavailable';
-  }
-}
-
-async function checkApiStatus() {
-  const dot  = document.getElementById('status-dot');
-  const text = document.getElementById('status-text');
-  try {
-    const data = await api.get('/health');
-    dot.className    = 'status-dot green';
-    text.textContent = `Connected · DB: ${data.database?.name || 'PropOSweb'}`;
-  } catch {
-    dot.className    = 'status-dot red';
-    text.textContent = 'Backend offline — check connection';
-  }
-}
-
 /* ─── Tab switching ─────────────────────────────────────────────── */
 function switchTab(tab) {
   document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
