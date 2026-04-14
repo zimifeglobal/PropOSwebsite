@@ -332,8 +332,6 @@ async function loadTransactions() {
     const expense  = allTransactions.filter(t=>t.direction==='out').reduce((s,t)=>s+t.amount,0);
     const amlCount = allTransactions.filter(t=>t.aml_flagged).length;
     const recCount = allTransactions.filter(t=>t.reconciled).length;
-    document.getElementById('stat-income')?.setAttribute('textContent', fmt.currency(income));
-    document.getElementById('stat-expense')?.setAttribute('textContent', fmt.currency(expense));
     if (document.getElementById('stat-income')) document.getElementById('stat-income').textContent = fmt.currency(income);
     if (document.getElementById('stat-expense')) document.getElementById('stat-expense').textContent = fmt.currency(expense);
     if (document.getElementById('stat-aml')) document.getElementById('stat-aml').textContent = amlCount;

@@ -2,15 +2,19 @@
 
 /**
  * Auto-detect API base URL:
- * - In production (Render): same origin → /api
- * - In local dev (file:// or localhost): → http://localhost:5000/api
+ * - Local file/localhost development -> localhost backend
+ * - Hosted frontend + hosted backend on same domain -> /api
+ * - Optional override via window.__PROPOS_API_BASE__
  */
 const API_BASE = (() => {
+  if (typeof window.__PROPOS_API_BASE__ === 'string' && window.__PROPOS_API_BASE__.trim()) {
+    return window.__PROPOS_API_BASE__.trim().replace(/\/$/, '');
+  }
   const { hostname, protocol } = window.location;
   if (protocol === 'file:' || hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000/api';
   }
-  return '/api'; // same-origin on Render
+  return '/api';
 })();
 
 const api = {
@@ -25,8 +29,27 @@ const api = {
 
     try {
       const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-      const data = await res.json();
-      if (!res.ok) throw { status: res.status, message: data.message || 'Request failed' };
+      const rawBody = await res.text();
+      let data = null;
+      if (rawBody) {
+        try {
+          data = JSON.parse(rawBody);
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!res.ok) {
+        const fallbackMessage = rawBody && !data
+          ? 'Server returned a non-JSON response. Please verify API route and deployment.'
+          : 'Request failed';
+        throw { status: res.status, message: data?.message || fallbackMessage };
+      }
+
+      if (!data) {
+        throw { status: res.status, message: 'Invalid JSON response from server.' };
+      }
+
       return data;
     } catch (err) {
       if (err.message === 'Failed to fetch') {
