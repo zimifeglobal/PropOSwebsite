@@ -14,7 +14,12 @@ const API_BASE = (() => {
   if (protocol === 'file:' || hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:5000/api';
   }
-  if (hostname === 'itestays.name.ng' || hostname === 'www.itestays.name.ng') {
+  if (
+    hostname === 'itestays.name.ng' ||
+    hostname === 'www.itestays.name.ng' ||
+    hostname === 'propos.elitestays.name.ng' ||
+    hostname === 'www.propos.elitestays.name.ng'
+  ) {
     return 'https://proposwebsite.onrender.com/api';
   }
   return '/api';
