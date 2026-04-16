@@ -11,14 +11,46 @@ let allTransactions = [];
 window.addEventListener('DOMContentLoaded', async () => {
   populateSidebar();
   setupNav();
+  setupResponsiveSidebar();
   await refreshAll();
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeSupportDrawer();
       closeModal();
+      closeMobileSidebar();
     }
   });
 });
+
+const MOBILE_SIDEBAR_BP = 768;
+
+function isMobileSidebarLayout() {
+  return typeof window.matchMedia === 'function' && window.matchMedia(`(max-width: ${MOBILE_SIDEBAR_BP}px)`).matches;
+}
+
+function setupResponsiveSidebar() {
+  const reset = () => {
+    const sb = document.getElementById('sidebar');
+    const main = document.querySelector('.main-wrap');
+    const bd = document.getElementById('sidebar-backdrop');
+    if (isMobileSidebarLayout()) {
+      sb?.classList.remove('collapsed');
+      main?.classList.remove('expanded');
+      sb?.classList.remove('is-open');
+      bd?.classList.add('hidden');
+    } else {
+      sb?.classList.remove('is-open');
+      bd?.classList.add('hidden');
+    }
+  };
+  window.addEventListener('resize', reset, { passive: true });
+  reset();
+}
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar')?.classList.remove('is-open');
+  document.getElementById('sidebar-backdrop')?.classList.add('hidden');
+}
 
 async function refreshAll() {
   await Promise.allSettled([
@@ -53,6 +85,7 @@ function setupNav() {
 }
 
 function navigateTo(section) {
+  if (isMobileSidebarLayout()) closeMobileSidebar();
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
   document.querySelectorAll('.section').forEach(s => {
@@ -77,8 +110,18 @@ function navigateTo(section) {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-  document.querySelector('.main-wrap').classList.toggle('expanded');
+  const sb = document.getElementById('sidebar');
+  const main = document.querySelector('.main-wrap');
+  const bd = document.getElementById('sidebar-backdrop');
+  if (!sb || !main) return;
+  if (isMobileSidebarLayout()) {
+    sb.classList.remove('collapsed');
+    const open = sb.classList.toggle('is-open');
+    bd?.classList.toggle('hidden', !open);
+    return;
+  }
+  sb.classList.toggle('collapsed');
+  main.classList.toggle('expanded');
 }
 
 // ─── OVERVIEW ─────────────────────────────────────────────────────

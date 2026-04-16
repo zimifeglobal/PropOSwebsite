@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <title>PropOS Enterprise — Dashboard</title>
   <meta name="description" content="PropOS Enterprise institutional real estate portfolio management dashboard"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body class="dashboard-page">
+
+  <div class="sidebar-backdrop hidden" id="sidebar-backdrop" onclick="closeMobileSidebar()" aria-hidden="true"></div>
 
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
@@ -122,7 +124,7 @@
 
       <!-- ═══ FINANCE ═══ -->
       <section id="section-finance" class="section hidden">
-        <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:1.5rem">
+        <div class="stats-grid stats-grid--finance-toolbar">
           <div class="stat-card"><div class="stat-icon green">⬇️</div><div class="stat-info"><span class="stat-num" id="stat-income">—</span><span class="stat-label">Total In (GBP)</span></div></div>
           <div class="stat-card"><div class="stat-icon red">⬆️</div><div class="stat-info"><span class="stat-num" id="stat-expense">—</span><span class="stat-label">Total Out (GBP)</span></div></div>
           <div class="stat-card"><div class="stat-icon orange">🚨</div><div class="stat-info"><span class="stat-num" id="stat-aml">—</span><span class="stat-label">AML Flagged</span></div></div>
@@ -244,6 +246,6 @@
   </script>
   <script src="js/config.js?v=20260415a"></script>
   <script src="js/locations-data.js?v=20260416"></script>
-  <script src="js/dashboard.js?v=20260417"></script>
+  <script src="js/dashboard.js?v=20260418"></script>
 </body>
 </html>
