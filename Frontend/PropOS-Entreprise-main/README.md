@@ -9,7 +9,7 @@ Vanilla HTML/CSS/JS login and dashboard. The **API base URL** is chosen in `js/c
 ## Deploy workflow
 
 1. Edit files here (`index.html`, `dashboard.html`, `css/`, `js/`).
-2. Copy the same tree into `Backend/public/` so the Express app serves the latest UI (see `Backend/public/README.md`).
+2. From `Backend/`, run **`npm run sync:public`** to mirror this folder into `Backend/public/` (see repo `scripts/sync-frontend-to-public.js`).
 3. Push to `main`; your host should run `npm install && npm run build` in `Backend/` and start with `npm start`.
 
 In-app help: use **About & services** and **Getting started** on the dashboard (they describe Portfolios, Assets, Directory, Dispatcher, Finance, Compliance, Insurance, and Support).

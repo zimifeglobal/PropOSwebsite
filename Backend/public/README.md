@@ -5,10 +5,7 @@ This folder is the **production copy** of the UI that ships with the API. Expres
 ## Keeping frontend and backend in sync
 
 1. **Source of truth for edits:** develop in `Frontend/PropOS-Entreprise-main/` (login, dashboard, CSS, `js/config.js`, etc.).
-2. **Before deploy or commit:** copy the same files into `Backend/public/` so the hosted app and API stay aligned:
-   - `index.html`, `dashboard.html`
-   - `css/style.css`
-   - `js/*.js` (including `config.js`, `auth.js`, `dashboard.js`, `locations-data.js`)
+2. **Before deploy or commit:** run **`npm run sync:public`** from the `Backend/` folder (or `node scripts/sync-frontend-to-public.js` from the repo root). That copies `index.html`, `dashboard.html`, and the `css/` and `js/` trees into this folder. `README.md` here is not overwritten.
 
 The API base URL is resolved in `js/config.js` (localhost for dev, `/api` on same host as the backend, or the Render API URL for static hosts).
 

@@ -9,7 +9,8 @@
     "dev": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",
     "test": "jest --passWithNoTests --forceExit",
     "test:coverage": "jest --coverage --passWithNoTests --forceExit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "sync:public": "node ../scripts/sync-frontend-to-public.js"
   },
   "keywords": ["propos", "proptech", "fintech", "enterprise", "api"],
   "author": "PropOS Enterprise",

@@ -64,7 +64,10 @@ npm install
 npm run dev      # ts-node-dev with hot reload
 npm test         # 25 unit tests
 npm run build    # compile to dist/ (gitignored — generate on deploy or locally)
+npm run sync:public   # copy Frontend/PropOS-Entreprise-main → public/ (HTML, CSS, JS)
 ```
+
+From the repo root you can also run `node scripts/sync-frontend-to-public.js` or `.\scripts\sync-frontend-to-public.ps1`.
 
 > **`Backend/dist/`** is listed in `.gitignore`. Do not commit compiled JS; Render and other hosts should run `npm run build` so `dist/` matches `src/`.
 
