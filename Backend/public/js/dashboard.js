@@ -14,6 +14,19 @@ let assignTicketId = null;
 
 const DIR_ROW_H = 56;
 
+/** Preset labels for new portfolios (users pick one or enter a custom name). */
+const PORTFOLIO_NAME_TEMPLATES = [
+  'UK Prime Residential',
+  'Build to Rent (BTR)',
+  'Commercial Office',
+  'Retail & Leisure',
+  'Industrial & Logistics',
+  'Mixed Use',
+  'Student Housing',
+  'Senior Living',
+  'Development & Construction',
+];
+
 // ─── Bootstrap ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   populateSidebar();
@@ -277,15 +290,58 @@ function renderPortfolios() {
     </div>`;
 }
 
+function portfolioNameTemplateOptionsHtml() {
+  const taken = new Set((allPortfolios || []).map((p) => String(p.name).trim().toLowerCase()));
+  const parts = PORTFOLIO_NAME_TEMPLATES.map((label) => {
+    const exists = taken.has(label.toLowerCase());
+    const dis = exists ? ' disabled' : '';
+    const suffix = exists ? ' (already added)' : '';
+    return `<option value="${escAttr(label)}"${dis}>${esc(label + suffix)}</option>`;
+  });
+  return (
+    `<option value="">— Select a portfolio name —</option>` +
+    parts.join('') +
+    `<option value="__custom__">Custom name…</option>`
+  );
+}
+
+function escAttr(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+
+function onPortfolioNamePresetChange() {
+  const preset = document.getElementById('pf-name-preset');
+  const wrap = document.getElementById('pf-name-custom-wrap');
+  const input = document.getElementById('pf-name-custom');
+  if (!preset || !wrap || !input) return;
+  const custom = preset.value === '__custom__';
+  wrap.classList.toggle('hidden', !custom);
+  input.required = custom;
+  if (!custom) input.value = '';
+}
+
 function showCreatePortfolioModal() {
   openModal('New Portfolio', `
     <form onsubmit="submitPortfolio(event)" style="display:flex;flex-direction:column;gap:1rem;padding:1.25rem">
-      <div class="form-group"><label>Portfolio Name</label><input class="filter-input" id="pf-name" placeholder="e.g. UK Prime Residential Q2" required style="width:100%"/></div>
+      <div class="form-group">
+        <label for="pf-name-preset">Portfolio name</label>
+        <select class="filter-select" id="pf-name-preset" style="width:100%" required onchange="onPortfolioNamePresetChange()">
+          ${portfolioNameTemplateOptionsHtml()}
+        </select>
+      </div>
+      <div class="form-group hidden" id="pf-name-custom-wrap">
+        <label for="pf-name-custom">Custom name</label>
+        <input class="filter-input" id="pf-name-custom" placeholder="e.g. UK Prime Residential Q2" style="width:100%"/>
+      </div>
       <div class="form-group"><label>Currency</label><select class="filter-select" id="pf-currency" style="width:100%"><option>GBP</option><option>USD</option><option>EUR</option></select></div>
       <div class="form-group"><label>Total AUM (£)</label><input type="number" class="filter-input" id="pf-aum" placeholder="0" style="width:100%"/></div>
       <div class="form-group"><label>Description</label><textarea class="filter-input" id="pf-desc" placeholder="Optional description…" style="width:100%;height:70px;resize:vertical"></textarea></div>
       <button type="submit" class="btn-primary">Create Portfolio</button>
     </form>`);
+  onPortfolioNamePresetChange();
 }
 
 async function submitPortfolio(e) {
@@ -293,8 +349,22 @@ async function submitPortfolio(e) {
   const btn = e.target.querySelector('button[type=submit]');
   btn.disabled = true; btn.textContent = 'Creating…';
   try {
+    const preset = document.getElementById('pf-name-preset');
+    const custom = document.getElementById('pf-name-custom');
+    let name = '';
+    if (preset?.value === '__custom__') {
+      name = custom?.value.trim() || '';
+    } else {
+      name = preset?.value.trim() || '';
+    }
+    if (!name) {
+      showModalError('Please select a portfolio name from the list or enter a custom name.');
+      btn.disabled = false;
+      btn.textContent = 'Create Portfolio';
+      return;
+    }
     await api.post('/portfolios', {
-      name: document.getElementById('pf-name').value.trim(),
+      name,
       currency: document.getElementById('pf-currency').value,
       total_aum: parseFloat(document.getElementById('pf-aum').value) || 0,
       description: document.getElementById('pf-desc').value.trim(),
