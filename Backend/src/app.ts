@@ -13,7 +13,16 @@ import { errorHandler, notFound } from './middlewares/error.middleware';
 const app = express();
 
 // ─── Security ──────────────────────────────────────────────────────
-app.use(helmet());
+// Allow browser fetch() to the Render API from custom domains (CSP connect-src defaults to 'self' only).
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        connectSrc: ["'self'", 'https://proposwebsite.onrender.com', 'https:', 'wss:'],
+      },
+    },
+  })
+);
 
 // ─── CORS ──────────────────────────────────────────────────────────
 // CLIENT_URL can be a comma-separated list for multiple allowed origins.
@@ -26,6 +35,7 @@ const envOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
 const allowedOrigins = [
   ...envOrigins,
   'https://propos.elitestays.name.ng', // production frontend
+  'https://www.propos.elitestays.name.ng',
   'https://itestays.name.ng',
   'https://www.itestays.name.ng',
   'http://localhost:3000',

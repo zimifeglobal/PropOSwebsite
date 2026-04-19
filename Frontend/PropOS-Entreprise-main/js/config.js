@@ -5,8 +5,27 @@
  * - Local file/localhost development -> localhost backend
  * - Hosted frontend + hosted backend on same domain -> /api
  * - Optional override via window.__PROPOS_API_BASE__
+ * - Local port override: window.__PROPOS_API_PORT__ (default 5000, must match Backend PORT)
  */
 const RENDER_API = 'https://proposwebsite.onrender.com/api';
+
+/**
+ * Hostnames where the SPA is served by the same Express app as the API — use /api (same origin).
+ * Must match any production custom domains that point at this Render service (see Backend CORS).
+ */
+const SAME_ORIGIN_API_HOSTS = new Set([
+  'proposwebsite.onrender.com',
+  'www.proposwebsite.onrender.com',
+  'propos.elitestays.name.ng',
+  'www.propos.elitestays.name.ng',
+  'itestays.name.ng',
+  'www.itestays.name.ng',
+]);
+
+function shouldUseRelativeApi(hostname) {
+  if (hostname.endsWith('.onrender.com')) return true;
+  return SAME_ORIGIN_API_HOSTS.has(hostname);
+}
 
 const API_BASE = (() => {
   if (typeof window.__PROPOS_API_BASE__ === 'string' && window.__PROPOS_API_BASE__.trim()) {
@@ -14,13 +33,21 @@ const API_BASE = (() => {
   }
   const { hostname, protocol } = window.location;
   if (protocol === 'file:' || hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:5000/api';
+    const localPort =
+      typeof window.__PROPOS_API_PORT__ === 'string' && window.__PROPOS_API_PORT__.trim()
+        ? window.__PROPOS_API_PORT__.trim()
+        : '5000';
+    const localHost = protocol === 'file:' || !hostname ? 'localhost' : hostname;
+    return `http://${localHost}:${localPort}/api`;
   }
-  /* Backend serves this SPA from the same host — use relative /api */
-  if (hostname === 'proposwebsite.onrender.com') {
+  /* Static-only deploy on Vercel — API stays on Render (cross-origin, CORS) */
+  if (/\.vercel\.app$/i.test(hostname)) {
+    return RENDER_API;
+  }
+  /* Same deployment (Render default host, preview URLs, or listed custom domains) */
+  if (shouldUseRelativeApi(hostname)) {
     return '/api';
   }
-  /* Vercel (*.vercel.app), custom domains, and any other static host: call Render directly */
   return RENDER_API;
 })();
 
@@ -133,7 +160,11 @@ const api = {
       return data;
     } catch (err) {
       if (err && err.message === 'Failed to fetch') {
-        throw { status: 0, message: 'Cannot reach server. Check your connection.' };
+        throw {
+          status: 0,
+          message:
+            'Cannot reach the API (network or browser security). If you use a custom domain, ensure it points at this app and redeploy the latest frontend. Try refreshing the page or use the official site URL.',
+        };
       }
       throw err;
     }
