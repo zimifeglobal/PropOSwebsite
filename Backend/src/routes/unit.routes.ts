@@ -20,6 +20,7 @@ router.use(protect, attachPortfolios);
  */
 router.get('/', ctrl.getUnits);
 router.post('/', validate(createUnitSchema), ctrl.createUnit);
+router.post('/seed-demo', ctrl.seedDemoUnits);
 router.get('/:id', ctrl.getUnit);
 router.put('/:id', validate(updateUnitSchema), ctrl.updateUnit);
 router.delete('/:id', ctrl.deleteUnit);

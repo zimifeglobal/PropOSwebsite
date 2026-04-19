@@ -6,6 +6,13 @@ const user = getCurrentUser();
 let allPortfolios = [];
 let allAssets     = [];
 let allTransactions = [];
+let allDirectoryUnits = [];
+let directoryScrollScheduled = false;
+let dispatcherStreamAbort = null;
+let dispatcherReconnectTimer = null;
+let assignTicketId = null;
+
+const DIR_ROW_H = 56;
 
 // ─── Bootstrap ────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
@@ -61,6 +68,8 @@ async function refreshAll() {
     loadCompliance(),
     loadInsurance(),
     loadProfile(),
+    loadDirectoryUnits(),
+    loadMaintenanceTickets(),
   ]);
 }
 
@@ -72,6 +81,16 @@ function populateSidebar() {
   document.getElementById('profile-avatar').textContent = initials;
   document.getElementById('sidebar-name').textContent   = user.name;
   document.getElementById('sidebar-role').textContent   = cap(user.role);
+  applyRoleBasedNav();
+}
+
+function applyRoleBasedNav() {
+  if (!user) return;
+  document.querySelectorAll('[data-show-roles]').forEach((el) => {
+    const roles = (el.getAttribute('data-show-roles') || '').split(/\s*,\s*/).filter(Boolean);
+    if (!roles.length) return;
+    el.style.display = roles.includes(user.role) ? '' : 'none';
+  });
 }
 
 // ─── Navigation ───────────────────────────────────────────────────
@@ -101,12 +120,24 @@ function navigateTo(section) {
     overview: 'Overview',
     portfolios: 'Portfolios',
     assets: 'Assets',
+    directory: 'Directory',
+    dispatcher: 'Dispatcher',
     finance: 'Finance',
     compliance: 'Compliance',
     insurance: 'Insurance',
     profile: 'Profile',
   };
   document.getElementById('page-title').textContent = titles[section] || cap(section);
+
+  if (section === 'dispatcher') {
+    loadMaintenanceTickets();
+    startDispatcherRealtime();
+  } else {
+    stopDispatcherRealtime();
+  }
+  if (section === 'directory') {
+    scheduleDirectoryRedraw();
+  }
 }
 
 function toggleSidebar() {
@@ -437,6 +468,357 @@ async function submitAsset(e) {
     await loadOverview();
   } catch (err) {
     btn.disabled = false; btn.textContent = 'Add Asset';
+    showModalError(err.message);
+  }
+}
+
+// ─── DIRECTORY (virtual list) & MAINTENANCE ───────────────────────
+function getFilteredDirectoryUnits() {
+  const status = document.getElementById('directory-filter-status')?.value || '';
+  const rows = allDirectoryUnits || [];
+  if (status === 'occupied' || status === 'vacant') {
+    return rows.filter((u) => u.status === status);
+  }
+  return rows;
+}
+
+function scheduleDirectoryRedraw() {
+  if (directoryScrollScheduled) return;
+  directoryScrollScheduled = true;
+  requestAnimationFrame(() => {
+    directoryScrollScheduled = false;
+    renderDirectoryVirtual();
+  });
+}
+
+function renderDirectoryVirtual() {
+  const wrap = document.getElementById('directory-viewport');
+  const inner = document.getElementById('directory-virtual-inner');
+  if (!wrap || !inner) return;
+
+  const rows = getFilteredDirectoryUnits();
+  const total = rows.length;
+  inner.innerHTML = '';
+
+  if (!total) {
+    inner.style.minHeight = '0';
+    inner.innerHTML =
+      '<p class="directory-empty" style="padding:1rem 1.25rem">No units match this filter.</p>';
+    return;
+  }
+  inner.style.minHeight = `${total * DIR_ROW_H}px`;
+
+  const st = wrap.scrollTop;
+  const vh = wrap.clientHeight;
+  const buf = 8;
+  let start = Math.max(0, Math.floor(st / DIR_ROW_H) - buf);
+  let end = Math.min(total, Math.ceil((st + vh) / DIR_ROW_H) + buf);
+
+  for (let i = start; i < end; i += 1) {
+    const u = rows[i];
+    const row = document.createElement('div');
+    row.className = 'directory-row';
+    row.style.top = `${i * DIR_ROW_H}px`;
+    const asset = u.asset_id;
+    const assetName = asset?.name || '—';
+    const city = asset?.address?.city || '';
+    const post = asset?.address?.postcode || '';
+    const uid = String(u._id || '');
+    row.innerHTML = `
+      <div class="directory-row__main">
+        <strong>${esc(assetName)}</strong>
+        <span class="directory-row__unit">Unit ${esc(u.unit_number)}</span>
+      </div>
+      <div class="directory-row__addr">${esc(city)} · ${esc(post)}</div>
+      <div class="directory-row__rent">${fmt.currency(u.current_rent)}</div>
+      <div class="directory-row__status"><span class="occ-pill occ-pill--${u.status}">${cap(u.status)}</span></div>
+      <div class="directory-row__action">
+        <button type="button" class="btn-primary-sm" data-unit-id="${esc(uid)}">Report issue</button>
+      </div>`;
+    const btn = row.querySelector('[data-unit-id]');
+    btn?.addEventListener('click', () => openReportIssueModal(uid));
+    inner.appendChild(row);
+  }
+}
+
+function onDirectoryFilterChange() {
+  const vp = document.getElementById('directory-viewport');
+  if (vp) vp.scrollTop = 0;
+  scheduleDirectoryRedraw();
+}
+
+async function loadDirectoryUnits() {
+  const meta = document.getElementById('directory-meta');
+  const note = document.getElementById('directory-empty-note');
+  try {
+    const data = await api.get('/units');
+    allDirectoryUnits = data.data || [];
+    if (meta) {
+      meta.textContent = `${allDirectoryUnits.length} unit${allDirectoryUnits.length === 1 ? '' : 's'} in your portfolios`;
+    }
+    if (note) note.classList.toggle('hidden', allDirectoryUnits.length > 0);
+    const vp = document.getElementById('directory-viewport');
+    if (vp) vp.scrollTop = 0;
+    scheduleDirectoryRedraw();
+  } catch (e) {
+    if (meta) meta.textContent = e.message || 'Could not load units.';
+  }
+}
+
+async function seedDemoDirectory(ev) {
+  const btn = ev?.target;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+  }
+  try {
+    const res = await api.post('/units/seed-demo', {});
+    await loadDirectoryUnits();
+    await loadOverview();
+    alert(res.message || 'Demo data ready.');
+  } catch (e) {
+    alert(e.message || 'Could not load demo data.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Load demo data';
+    }
+  }
+}
+
+function openReportIssueModal(unitId) {
+  openModal('Report maintenance issue', `
+    <form onsubmit="submitReportIssue(event)" style="display:flex;flex-direction:column;gap:0.9rem;padding:1.25rem">
+      <input type="hidden" id="report-unit-id" value="${esc(unitId)}" />
+      <div class="form-group"><label>Title</label><input class="filter-input" id="report-title" required maxlength="200" style="width:100%" placeholder="e.g. Heating not working"/></div>
+      <div class="form-group"><label>Details</label><textarea class="filter-input" id="report-desc" required minlength="10" maxlength="8000" style="width:100%;min-height:100px" placeholder="Describe the issue (min. 10 characters)"></textarea></div>
+      <div class="form-group"><label>Priority</label><select class="filter-select" id="report-priority" style="width:100%"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select></div>
+      <button type="submit" class="btn-primary">Submit ticket</button>
+    </form>`);
+}
+
+async function submitReportIssue(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    await api.post('/maintenance/tickets', {
+      unit_id: document.getElementById('report-unit-id').value,
+      title: document.getElementById('report-title').value.trim(),
+      description: document.getElementById('report-desc').value.trim(),
+      priority: document.getElementById('report-priority').value,
+    });
+    closeModal();
+    await loadMaintenanceTickets();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Submit ticket';
+    showModalError(err.message);
+  }
+}
+
+function setDispatcherLiveUi(mode) {
+  const label = document.getElementById('dispatcher-live-label');
+  if (!label) return;
+  if (mode === 'sse') {
+    label.textContent = '● Live (push)';
+    label.style.color = 'var(--green)';
+    label.title = 'Server-sent events: the table refreshes when tickets change.';
+  } else if (mode === 'reconnect') {
+    label.textContent = '○ Reconnecting…';
+    label.style.color = 'var(--orange)';
+    label.title = 'Reconnecting to the live stream…';
+  } else {
+    label.textContent = '● Live';
+    label.style.color = 'var(--green)';
+    label.title = '';
+  }
+}
+
+function handleSseEventBlock(block) {
+  const trimmed = block.trim();
+  if (!trimmed || trimmed.startsWith(':')) return;
+  let eventName = 'message';
+  for (const line of trimmed.split(/\r?\n/)) {
+    if (line.startsWith('event:')) eventName = line.slice(6).trim();
+  }
+  if (eventName === 'tickets_changed') {
+    const sec = document.getElementById('section-dispatcher');
+    if (sec?.classList.contains('active')) loadMaintenanceTickets(true);
+  }
+}
+
+function scheduleDispatcherReconnect(delayMs) {
+  if (dispatcherReconnectTimer) clearTimeout(dispatcherReconnectTimer);
+  dispatcherReconnectTimer = setTimeout(() => {
+    dispatcherReconnectTimer = null;
+    if (!document.getElementById('section-dispatcher')?.classList.contains('active')) return;
+    startDispatcherRealtime();
+  }, delayMs);
+}
+
+function stopDispatcherRealtime() {
+  if (dispatcherStreamAbort) {
+    dispatcherStreamAbort.abort();
+    dispatcherStreamAbort = null;
+  }
+  if (dispatcherReconnectTimer) {
+    clearTimeout(dispatcherReconnectTimer);
+    dispatcherReconnectTimer = null;
+  }
+}
+
+async function startDispatcherRealtime() {
+  if (dispatcherReconnectTimer) {
+    clearTimeout(dispatcherReconnectTimer);
+    dispatcherReconnectTimer = null;
+  }
+  if (dispatcherStreamAbort) {
+    dispatcherStreamAbort.abort();
+    dispatcherStreamAbort = null;
+  }
+  if (typeof getApiBase !== 'function') {
+    setDispatcherLiveUi('reconnect');
+    scheduleDispatcherReconnect(4000);
+    return;
+  }
+  const base = getApiBase();
+  const token = localStorage.getItem('propos_token');
+  if (!token) return;
+
+  const controller = new AbortController();
+  dispatcherStreamAbort = controller;
+
+  try {
+    const res = await fetch(`${base}/maintenance/stream`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'text/event-stream',
+      },
+      signal: controller.signal,
+    });
+
+    if (!res.ok || !res.body) {
+      setDispatcherLiveUi('reconnect');
+      scheduleDispatcherReconnect(5000);
+      return;
+    }
+
+    setDispatcherLiveUi('sse');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split(/\r?\n\r?\n/);
+        buffer = parts.pop() || '';
+        for (const block of parts) {
+          handleSseEventBlock(block);
+        }
+      }
+    } catch (e) {
+      if (e?.name === 'AbortError') return;
+    }
+
+    if (!controller.signal.aborted && document.getElementById('section-dispatcher')?.classList.contains('active')) {
+      setDispatcherLiveUi('reconnect');
+      scheduleDispatcherReconnect(2000);
+    }
+  } catch (e) {
+    if (e?.name === 'AbortError') return;
+    if (document.getElementById('section-dispatcher')?.classList.contains('active')) {
+      setDispatcherLiveUi('reconnect');
+      scheduleDispatcherReconnect(4000);
+    }
+  }
+}
+
+async function loadMaintenanceTickets(silent) {
+  const el = document.getElementById('dispatcher-tickets');
+  if (!el) return;
+  if (!silent) el.innerHTML = '<p class="empty-msg">Loading…</p>';
+  try {
+    const data = await api.get('/maintenance/tickets');
+    const tickets = data.data || [];
+    if (!tickets.length) {
+      el.innerHTML =
+        '<p class="empty-msg">No maintenance tickets yet. Report an issue from the Directory.</p>';
+      return;
+    }
+    const canAssign = user && (user.role === 'manager' || user.role === 'admin');
+    el.innerHTML = `
+      <div class="dispatcher-table-wrap">
+      <table class="data-table dispatcher-table">
+        <thead><tr><th>Ticket</th><th>Unit</th><th>Status</th><th>Priority</th><th>Technician</th>${
+          canAssign ? '<th></th>' : ''
+        }</tr></thead>
+        <tbody>${tickets
+          .map((t) => {
+            const unit = t.unit_id;
+            const assetName = unit?.asset_id?.name || '—';
+            const unitNo = unit?.unit_number || '—';
+            const tech = t.assigned_technician_name || '—';
+            const tid = String(t._id);
+            const assignBtn =
+              canAssign && t.status === 'open'
+                ? `<button type="button" class="btn-primary-sm" data-assign-ticket="${esc(tid)}">Assign technician</button>`
+                : '—';
+            return `<tr>
+              <td><strong>${esc(t.title)}</strong><br/><span class="dispatcher-ticket-meta">${fmt.datetime(
+                t.updatedAt
+              )}</span></td>
+              <td>${esc(assetName)} · ${esc(unitNo)}</td>
+              <td><span class="status-pill ${t.status === 'open' ? 'inactive' : 'active'}">${cap(
+                t.status
+              )}</span></td>
+              <td>${cap(t.priority)}</td>
+              <td>${esc(tech)}</td>${canAssign ? `<td>${assignBtn}</td>` : ''}
+            </tr>`;
+          })
+          .join('')}
+        </tbody>
+      </table>
+      </div>`;
+    el.querySelectorAll('[data-assign-ticket]').forEach((b) => {
+      b.addEventListener('click', () => openAssignTechnicianModal(b.getAttribute('data-assign-ticket')));
+    });
+  } catch (e) {
+    el.innerHTML = `<p class="empty-msg error">${esc(e.message)}</p>`;
+  }
+}
+
+function openAssignTechnicianModal(ticketId) {
+  assignTicketId = ticketId;
+  openModal('Assign technician', `
+    <form onsubmit="submitAssignTechnician(event)" style="display:flex;flex-direction:column;gap:0.9rem;padding:1.25rem">
+      <div class="form-group"><label>Technician name</label><input class="filter-input" id="assign-tech-name" required minlength="2" maxlength="120" placeholder="e.g. Alex Rivera" style="width:100%"/></div>
+      <button type="submit" class="btn-primary">Assign</button>
+    </form>`);
+}
+
+async function submitAssignTechnician(e) {
+  e.preventDefault();
+  if (!assignTicketId) return;
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  btn.textContent = 'Assigning…';
+  try {
+    await api.patch(`/maintenance/tickets/${assignTicketId}/assign`, {
+      assigned_technician_name: document.getElementById('assign-tech-name').value.trim(),
+    });
+    closeModal();
+    assignTicketId = null;
+    await loadMaintenanceTickets();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Assign';
     showModalError(err.message);
   }
 }

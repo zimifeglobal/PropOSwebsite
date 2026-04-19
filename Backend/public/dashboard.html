@@ -26,6 +26,8 @@
       <a href="#" class="nav-item active" data-section="overview" title="Summary of portfolios, assets, recent activity, and compliance status"><span class="nav-icon">📊</span><span>Overview</span></a>
       <a href="#" class="nav-item" data-section="portfolios" title="Create and manage investment or property portfolios"><span class="nav-icon">🏦</span><span>Portfolios</span></a>
       <a href="#" class="nav-item" data-section="assets" title="Add buildings and units linked to a portfolio"><span class="nav-icon">🏢</span><span>Assets</span></a>
+      <a href="#" class="nav-item" data-section="directory" title="Property directory with occupancy and maintenance reporting"><span class="nav-icon">📂</span><span>Directory</span></a>
+      <a href="#" class="nav-item" data-section="dispatcher" data-show-roles="manager,admin" title="Assign technicians to maintenance tickets"><span class="nav-icon">🛠️</span><span>Dispatcher</span></a>
       <a href="#" class="nav-item" data-section="finance" title="Record money in/out, categories, and AML flags"><span class="nav-icon">💷</span><span>Finance</span></a>
       <a href="#" class="nav-item" data-section="compliance" title="Audit status and compliance logs"><span class="nav-icon">🛡️</span><span>Compliance</span></a>
       <a href="#" class="nav-item" data-section="insurance" title="Policies and indicative quotes for your assets"><span class="nav-icon">📋</span><span>Insurance</span></a>
@@ -119,6 +121,50 @@
             </div>
           </div>
           <div id="assets-list"><p class="empty-msg">Loading assets…</p></div>
+        </div>
+      </section>
+
+      <!-- ═══ DIRECTORY ═══ -->
+      <section id="section-directory" class="section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Property directory</h3>
+            <div class="directory-toolbar">
+              <label class="sr-only" for="directory-filter-status">Filter by occupancy</label>
+              <select id="directory-filter-status" class="filter-select" title="Show occupied, vacant, or all units" onchange="onDirectoryFilterChange()">
+                <option value="">All units</option>
+                <option value="occupied">Occupied</option>
+                <option value="vacant">Vacant</option>
+              </select>
+              <button type="button" class="btn-sm" onclick="loadDirectoryUnits()" title="Reload from server">↻ Reload</button>
+              <button type="button" class="btn-primary-sm" onclick="seedDemoDirectory(event)" title="Create demo portfolio and 24 units in MongoDB if you have fewer than 20">Load demo data</button>
+            </div>
+          </div>
+          <p class="directory-hint">Virtualized list of units from MongoDB. Use <strong>Report issue</strong> to log a maintenance ticket.</p>
+          <div id="directory-meta" class="directory-meta" aria-live="polite">—</div>
+          <div class="directory-colhead" aria-hidden="true">
+            <span>Property / unit</span>
+            <span>Location</span>
+            <span>Rent</span>
+            <span>Status</span>
+            <span>Actions</span>
+          </div>
+          <div class="directory-viewport" id="directory-viewport" role="list" aria-label="Property units" onscroll="scheduleDirectoryRedraw()">
+            <div class="directory-virtual-inner" id="directory-virtual-inner"></div>
+          </div>
+          <p id="directory-empty-note" class="empty-msg hidden" style="padding:1rem">No units yet. Use <strong>Load demo data</strong> (adds a demo portfolio and 24 units) or create units via the API.</p>
+        </div>
+      </section>
+
+      <!-- ═══ DISPATCHER ═══ -->
+      <section id="section-dispatcher" class="section hidden">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Maintenance dispatch</h3>
+            <span class="dispatcher-live" id="dispatcher-live-label" title="Uses server-sent events when connected">● Live</span>
+          </div>
+          <p class="directory-hint">Managers assign technicians to open tickets. Updates are pushed over a live connection (with automatic reconnect).</p>
+          <div id="dispatcher-tickets"><p class="empty-msg">Loading…</p></div>
         </div>
       </section>
 
@@ -246,6 +292,6 @@
   </script>
   <script src="js/config.js?v=20260415a"></script>
   <script src="js/locations-data.js?v=20260416"></script>
-  <script src="js/dashboard.js?v=20260418"></script>
+  <script src="js/dashboard.js?v=20260420"></script>
 </body>
 </html>

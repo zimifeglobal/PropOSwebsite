@@ -9,6 +9,7 @@ import complianceRoutes from './compliance.routes';
 import financeRoutes from './finance.routes';
 import insuranceRoutes from './insurance.routes';
 import supportRoutes from './support.routes';
+import maintenanceRoutes from './maintenance.routes';
 
 const router = Router();
 
@@ -43,5 +44,6 @@ router.use('/compliance', complianceRoutes);
 router.use('/finance',    financeRoutes);
 router.use('/insurance',  insuranceRoutes);
 router.use('/support',    supportRoutes);
+router.use('/maintenance', maintenanceRoutes);
 
 export default router;
