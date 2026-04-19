@@ -10,21 +10,13 @@
 const RENDER_API = 'https://proposwebsite.onrender.com/api';
 
 /**
- * Hostnames where the SPA is served by the same Express app as the API — use /api (same origin).
- * Must match any production custom domains that point at this Render service (see Backend CORS).
+ * Use same-origin `/api` only when the page is served from Render (`*.onrender.com`), where the
+ * Express app mounts the API. Custom domains (e.g. static hosts on Namecheap, Vercel, etc.) must
+ * call the Render API URL directly — relative `/api` would 404 with HTML. Override with
+ * `window.__PROPOS_API_BASE__` if your custom domain is actually wired to this backend.
  */
-const SAME_ORIGIN_API_HOSTS = new Set([
-  'proposwebsite.onrender.com',
-  'www.proposwebsite.onrender.com',
-  'propos.elitestays.name.ng',
-  'www.propos.elitestays.name.ng',
-  'itestays.name.ng',
-  'www.itestays.name.ng',
-]);
-
 function shouldUseRelativeApi(hostname) {
-  if (hostname.endsWith('.onrender.com')) return true;
-  return SAME_ORIGIN_API_HOSTS.has(hostname);
+  return hostname.endsWith('.onrender.com');
 }
 
 const API_BASE = (() => {
