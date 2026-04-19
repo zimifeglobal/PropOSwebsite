@@ -33,7 +33,7 @@ CLIENT_URL=https://your-app.onrender.com
 
 > ⚠️ **Never commit `.env` to git** — configure these in Render's dashboard only.
 
-## API Endpoints
+## API Endpoints (summary)
 
 | Base | Description |
 |------|-------------|
@@ -42,12 +42,18 @@ CLIENT_URL=https://your-app.onrender.com
 | `POST /api/auth/login` | Login (returns JWT) |
 | `GET /api/portfolios` | Portfolios (auth) |
 | `GET /api/assets` | Assets (auth + scoped) |
+| `GET /api/units` | Units linked to assets (auth) |
+| `GET /api/tenancies` | Tenancies (auth) |
+| `GET /api/maintenance/...` | Maintenance tickets, SSE stream (auth) |
 | `GET /api/finance/transactions` | Transactions (auth) |
 | `POST /api/finance/reconciliation` | AI rent reconciliation |
 | `GET /api/compliance/audit-status` | Compliance overview |
 | `GET /api/insurance/policies` | Insurance policies |
 | `POST /api/insurance/quote` | ESG quote engine |
+| `POST /api/support/messages` | Support messages (auth) |
 | `GET /api/docs` | Swagger UI |
+
+The full contract is in **Swagger** at `/api/docs` after the server is running.
 
 ## Local Development
 
@@ -57,8 +63,10 @@ npm install
 # Copy .env.example to .env and fill values
 npm run dev      # ts-node-dev with hot reload
 npm test         # 25 unit tests
-npm run build    # compile to dist/
+npm run build    # compile to dist/ (gitignored — generate on deploy or locally)
 ```
+
+> **`Backend/dist/`** is listed in `.gitignore`. Do not commit compiled JS; Render and other hosts should run `npm run build` so `dist/` matches `src/`.
 
 ## Architecture
 
@@ -68,14 +76,14 @@ Backend/
 │   ├── app.ts              Express app factory
 │   ├── server.ts           Entry point (DB + cron)
 │   ├── config/             database.ts, swagger.ts
-│   ├── models/             8 Mongoose schemas
-│   ├── controllers/        8 domain controllers
-│   ├── services/           auth, reconciliation, lease, compliance, insurance, cron
+│   ├── models/             Mongoose schemas (users, portfolios, assets, units, …)
+│   ├── controllers/        Domain controllers (auth, portfolios, assets, units, …)
+│   ├── services/           auth, reconciliation, lease, compliance, insurance, cron, maintenance-events
 │   ├── middlewares/        auth, aml, validate, scope, error
-│   ├── routes/             8 route files + index
-│   ├── schemas/            7 Zod validation schemas
+│   ├── routes/             Route modules + index
+│   ├── schemas/            Zod validation schemas
 │   ├── utils/              logger, apiResponse, fuzzyMatch, generateToken
 │   ├── types/              express.d.ts
 │   └── tests/              reconciliation + compliance (25 tests)
-└── public/                 Frontend static files (served by Express)
+└── public/                 Frontend static files (mirror of Frontend/PropOS-Entreprise-main)
 ```

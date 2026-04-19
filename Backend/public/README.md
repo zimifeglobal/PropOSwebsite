@@ -1,11 +1,17 @@
-<div align="center">
+# PropOS Enterprise — static frontend (served by Express)
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+This folder is the **production copy** of the UI that ships with the API. Express serves it from `Backend/public/` when you deploy (for example on Render).
 
-  <h1>Built with AI Studio</h2>
+## Keeping frontend and backend in sync
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1. **Source of truth for edits:** develop in `Frontend/PropOS-Entreprise-main/` (login, dashboard, CSS, `js/config.js`, etc.).
+2. **Before deploy or commit:** copy the same files into `Backend/public/` so the hosted app and API stay aligned:
+   - `index.html`, `dashboard.html`
+   - `css/style.css`
+   - `js/*.js` (including `config.js`, `auth.js`, `dashboard.js`, `locations-data.js`)
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+The API base URL is resolved in `js/config.js` (localhost for dev, `/api` on same host as the backend, or the Render API URL for static hosts).
 
-</div>
+## Build output
+
+Server-side TypeScript compiles to `Backend/dist/` via `npm run build`. That folder is **not** committed to git; your host should run `npm install && npm run build` on each deploy.

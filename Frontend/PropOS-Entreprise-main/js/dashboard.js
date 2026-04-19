@@ -1059,15 +1059,17 @@ async function handleLogout() {
 function openAboutModal() {
   openModal('About PropOS Enterprise', `
     <div class="help-prose">
-      <p class="help-lead">PropOS Enterprise is a <strong>property and portfolio operations platform</strong> for teams who manage real estate assets, cash flows, and regulatory obligations in one place.</p>
+      <p class="help-lead">PropOS Enterprise is a <strong>property and portfolio operations platform</strong> for teams who manage real estate assets, tenancies, maintenance, cash flows, and regulatory obligations in one place.</p>
       <h4>What we help you do</h4>
       <ul>
         <li><strong>Portfolios</strong> — Group assets under named portfolios with currencies and AUM for reporting.</li>
-        <li><strong>Assets</strong> — Record buildings and addresses, ESG and health scores, and values linked to a portfolio.</li>
+        <li><strong>Assets</strong> — Record buildings and sites with ESG and health scores, and values linked to a portfolio.</li>
+        <li><strong>Directory</strong> — Browse units and tenancies per asset, raise maintenance tickets, and see status at a glance.</li>
+        <li><strong>Dispatcher</strong> — Managers and admins assign technicians to open maintenance jobs.</li>
         <li><strong>Finance</strong> — Log money in and out with categories, reconciliation flags, and AML markers.</li>
         <li><strong>Compliance</strong> — See audit status and a trail of compliance checks across entities.</li>
         <li><strong>Insurance</strong> — Review policies and run indicative quotes using your asset data.</li>
-        <li><strong>Profile</strong> — View your role (cashier, manager, admin) and account status.</li>
+        <li><strong>Profile &amp; support</strong> — View your role and account status; message your team via the Support drawer.</li>
       </ul>
       <p class="help-muted">Access to actions may vary by role. Your organisation’s admin can adjust permissions and data scope.</p>
     </div>`);
@@ -1079,6 +1081,7 @@ function openGuideModal() {
       <ol class="help-steps">
         <li><strong>Create a portfolio</strong> — Go to <em>Portfolios</em> → <em>+ New Portfolio</em>. Give it a name and optional AUM.</li>
         <li><strong>Add property assets</strong> — Open <em>Assets</em> → <em>+ Add Asset</em>. Pick the portfolio, enter address (use the city picker), type, and value.</li>
+        <li><strong>Use Directory</strong> — Open <em>Directory</em> to add units, record tenancies, and create or follow maintenance tickets. Managers and admins can use <em>Dispatcher</em> to assign technicians.</li>
         <li><strong>Record transactions</strong> — Under <em>Finance</em>, add in/out movements with categories so reports stay meaningful.</li>
         <li><strong>Review compliance</strong> — Visit <em>Compliance</em> for audit status and logs; use <em>Refresh</em> after changes.</li>
         <li><strong>Insurance</strong> — When you have assets, select one in <em>Get Quote</em> to see an indicative premium.</li>
