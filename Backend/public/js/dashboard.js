@@ -669,7 +669,7 @@ function stopDispatcherRealtime() {
   }
 }
 
-async function startDispatcherRealtime() {
+async function startDispatcherRealtime(alreadyRetried) {
   if (dispatcherReconnectTimer) {
     clearTimeout(dispatcherReconnectTimer);
     dispatcherReconnectTimer = null;
@@ -684,7 +684,7 @@ async function startDispatcherRealtime() {
     return;
   }
   const base = getApiBase();
-  const token = localStorage.getItem('propos_token');
+  let token = localStorage.getItem('propos_token');
   if (!token) return;
 
   const controller = new AbortController();
@@ -699,6 +699,13 @@ async function startDispatcherRealtime() {
       },
       signal: controller.signal,
     });
+
+    if (res.status === 401 && !alreadyRetried && typeof api.refreshSession === 'function') {
+      const renewed = await api.refreshSession();
+      if (renewed) {
+        return startDispatcherRealtime(true);
+      }
+    }
 
     if (!res.ok || !res.body) {
       setDispatcherLiveUi('reconnect');

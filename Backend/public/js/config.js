@@ -28,9 +28,67 @@ function getApiBase() {
   return API_BASE;
 }
 
+/** Endpoints where 401 must not trigger refresh (login/register/refresh). */
+function shouldAttemptRefresh(endpoint) {
+  if (/^\/auth\/(login|register|refresh)(\?|$)/.test(endpoint)) return false;
+  if (!localStorage.getItem('propos_refresh')) return false;
+  return true;
+}
+
+let refreshPromise = null;
+
+/**
+ * Uses POST /auth/refresh to rotate tokens. Shared across concurrent 401s.
+ * @returns {Promise<boolean>} true if new access token is stored
+ */
+async function refreshSession() {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const rt = localStorage.getItem('propos_refresh');
+      if (!rt) return false;
+      try {
+        const res = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: rt }),
+        });
+        const rawBody = await res.text();
+        let data = null;
+        if (rawBody) {
+          try {
+            data = JSON.parse(rawBody);
+          } catch {
+            data = null;
+          }
+        }
+        const accessToken = data?.data?.accessToken;
+        const newRefresh = data?.data?.refreshToken;
+        if (!res.ok || !data?.success || !accessToken || !newRefresh) {
+          clearSession();
+          window.location.href = 'index.html';
+          return false;
+        }
+        localStorage.setItem('propos_token', accessToken);
+        localStorage.setItem('propos_refresh', newRefresh);
+        return true;
+      } catch {
+        clearSession();
+        window.location.href = 'index.html';
+        return false;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+  }
+  return refreshPromise;
+}
+
 const api = {
-  /** Generic fetch wrapper with auth header */
-  async request(endpoint, options = {}) {
+  /** Exposed for SSE and other raw fetch callers that need the same refresh behaviour */
+  refreshSession,
+
+  /** Generic fetch wrapper with auth header and one automatic refresh+retry on 401 */
+  async request(endpoint, options = {}, isRetry = false) {
     const token = localStorage.getItem('propos_token');
     const headers = {
       'Content-Type': 'application/json',
@@ -50,6 +108,17 @@ const api = {
         }
       }
 
+      if (res.status === 401 && !isRetry && shouldAttemptRefresh(endpoint)) {
+        const renewed = await refreshSession();
+        if (renewed) {
+          return api.request(endpoint, options, true);
+        }
+        throw {
+          status: 401,
+          message: data?.message || 'Session expired. Please sign in again.',
+        };
+      }
+
       if (!res.ok) {
         const fallbackMessage = rawBody && !data
           ? `Server returned non-JSON (HTTP ${res.status}). Static hosts must use the Render API URL — redeploy the latest frontend.`
@@ -63,7 +132,7 @@ const api = {
 
       return data;
     } catch (err) {
-      if (err.message === 'Failed to fetch') {
+      if (err && err.message === 'Failed to fetch') {
         throw { status: 0, message: 'Cannot reach server. Check your connection.' };
       }
       throw err;
